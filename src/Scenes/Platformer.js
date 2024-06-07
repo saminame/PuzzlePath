@@ -1,6 +1,8 @@
 class Platformer extends Phaser.Scene {
     constructor() {
         super("platformerScene");
+        this.my = {sprite: {}};
+
     }
 
     init() {
@@ -9,12 +11,17 @@ class Platformer extends Phaser.Scene {
         this.DRAG = 700;    // DRAG < ACCELERATION = icy slide
         this.physics.world.gravity.y = 1500;
         this.JUMP_VELOCITY = -600;
+        this.PARTICLE_VELOCITY = 50;
+        this.SCALE = 2.0;
+        this.PLAYER_VELOCITY = 0;
+        this.HEALTH = 3;    
     }
 
     create() {
         // Create a new tilemap game object which uses 18x18 pixel tiles, and is
         // 45 tiles wide and 25 tiles tall.
-        this.map = this.add.tilemap("final", 18, 18, 100, 70);
+        this.map = this.add.tilemap("final", 18, 18, 80, 50);
+        this.physics.world.setBounds(0,0,80*18, 50*18);
 
         // Add a tileset to the map
         // First parameter: name we gave the tileset in Tiled
@@ -24,7 +31,7 @@ class Platformer extends Phaser.Scene {
        
         // Create a layer
         this.groundLayer = this.map.createLayer("Ground-n-Platforms", [this.tileset1, this.tileset2], 0, 0);
-        this.groundLayer.setScale(2.0);
+        //this.groundLayer.setScale(2.0);
 
         // Make it collidable
         this.groundLayer.setCollisionByProperty({
@@ -32,8 +39,10 @@ class Platformer extends Phaser.Scene {
         });
 
         // set up player avatar
-        my.sprite.player = this.physics.add.sprite(game.config.width/4, game.config.height/2, "platformer_characters", "tile_0000.png").setScale(SCALE)
+        my.sprite.player = this.physics.add.sprite(450, 200, "platformer_characters", "tile_0000.png").setScale(SCALE)
         my.sprite.player.setCollideWorldBounds(true);
+        my.sprite.player.setScale(1);
+        my.sprite.player.body.checkCollision.up = false;
 
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
@@ -52,6 +61,8 @@ class Platformer extends Phaser.Scene {
         this.cameras.main.startFollow(my.sprite.player, true, 0.25, 0.25); // (target, [,roundPixels][,lerpX][,lerpY])
         this.cameras.main.setDeadzone(50, 50);
         this.cameras.main.setZoom(this.SCALE);
+
+        this.physics.world.TILE_BIAS = 24;
 
     }
 
@@ -84,5 +95,26 @@ class Platformer extends Phaser.Scene {
             // TODO: set a Y velocity to have the player "jump" upwards (negative Y direction)
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
         }
+
+        // Fall Damage
+        if(!my.sprite.player.body.blocked.down){
+            this.PLAYER_VELOCITY = my.sprite.player.body.velocity.y;
+        }
+        if(my.sprite.player.y >= 885){// If player falls to bottom of map
+            this.HEALTH -=1;
+            this.events.emit('healthTracker');
+            my.sprite.player.y = 200;
+            my.sprite.player.x = 450;
+        }else if(my.sprite.player.body.blocked.down && this.PLAYER_VELOCITY > 800 && my.sprite.player.y < 888){ // If player falls from tall height
+            this.PLAYER_VELOCITY = 0;
+            this.HEALTH -=1;
+            this.events.emit('healthTracker');
+        }
+        // If player health reaches 0, restart game
+        if(this.HEALTH <= 0){
+            this.events.emit('restart');
+            this.scene.restart();
+        }
+
     }
 }
