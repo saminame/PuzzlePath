@@ -283,7 +283,8 @@ class Platformer extends Phaser.Scene {
             }
             if(this.COOLDOWN !=0){
                 this.COOLDOWN ++;
-            }else if(this.COOLDOWN == 10){
+            }
+            if(this.COOLDOWN == 10){
                 this.COOLDOWN = 0;
             }
 
