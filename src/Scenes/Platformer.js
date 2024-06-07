@@ -39,10 +39,21 @@ class Platformer extends Phaser.Scene {
         });
 
         // set up player avatar
-        my.sprite.player = this.physics.add.sprite(450, 200, "platformer_characters", "tile_0000.png").setScale(SCALE)
+        const playerInitialX = 18; 
+        // const playerInitialY = this.physics.world.bounds.height - 36; // Adjust based on your sprite height and platform position
+        const playerInitialY = this.physics.world.bounds.height - 54; // Adjust to place the player just above the platform
+        my.sprite.player = this.physics.add.sprite(playerInitialX, playerInitialY, "platformer_characters", "tile_0000.png").setScale(this.SCALE);
+        
         my.sprite.player.setCollideWorldBounds(true);
         my.sprite.player.setScale(1);
         my.sprite.player.body.checkCollision.up = false;
+
+        this.groundLayer.setCollisionByProperty({ collides: true });
+        this.physics.add.collider(my.sprite.player, this.groundLayer);
+
+        console.log("Player initial position X: ", playerInitialX);
+        console.log("Player initial position Y: ", playerInitialY);
+        
 
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
@@ -100,16 +111,23 @@ class Platformer extends Phaser.Scene {
         if(!my.sprite.player.body.blocked.down){
             this.PLAYER_VELOCITY = my.sprite.player.body.velocity.y;
         }
-        if(my.sprite.player.y >= 885){// If player falls to bottom of map
-            this.HEALTH -=1;
+
+        if(my.sprite.player.y >= 885){ // If player falls to bottom of map
+            this.HEALTH -= 1;
             this.events.emit('healthTracker');
-            my.sprite.player.y = 200;
-            my.sprite.player.x = 450;
-        }else if(my.sprite.player.body.blocked.down && this.PLAYER_VELOCITY > 800 && my.sprite.player.y < 888){ // If player falls from tall height
+            my.sprite.player.y = this.physics.world.bounds.height - 36;  // Reset Y position to bottom platform
+            my.sprite.player.x = 18;  // Reset X position to left platform
+        }
+        
+        
+        else if(my.sprite.player.body.blocked.down && this.PLAYER_VELOCITY > 800 && my.sprite.player.y < 888){ // If player falls from tall height
             this.PLAYER_VELOCITY = 0;
             this.HEALTH -=1;
             this.events.emit('healthTracker');
         }
+
+        console.log("Player is blocked down: ", my.sprite.player.body.blocked.down);
+
         // If player health reaches 0, restart game
         if(this.HEALTH <= 0){
             this.events.emit('restart');
