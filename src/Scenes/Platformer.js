@@ -2,6 +2,7 @@ class Platformer extends Phaser.Scene {
     constructor() {
         super("platformerScene");
         this.my = {sprite: {}};
+
     }
 
     init() {
@@ -187,6 +188,9 @@ class Platformer extends Phaser.Scene {
         this.cameras.main.setDeadzone(50, 50);
         this.cameras.main.setZoom(this.SCALE);
 
+        // ladder collision 
+        this.physics.add.collider(my.sprite.player, this.laddersGroup, this.climbLadders, null, this);
+
         this.physics.world.TILE_BIAS = 24;
 
     }
@@ -240,5 +244,24 @@ class Platformer extends Phaser.Scene {
             this.scene.restart();
         }
 
+        // ladder movement logic
+        if (cursors.up.isDown && this.playerOnLadders) {
+            my.sprite.player.setVelocityY(-200);
+        } else if (cursors.down.isDown && this.playerOnLadders) {
+            my.sprite.player.setVelocityY(200);
+        }
+
+        // if 5 coins are collected, the rope disappears
+
     }
+
+    climbLadders(player, ladders) {
+        if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), ladders.getBounds())) {
+            this.playerOnLadders = true;
+            player.body.setVelocityX(0);
+        } else {
+            this.playerOnLadders = false;
+        }
+    }
+    
 }
