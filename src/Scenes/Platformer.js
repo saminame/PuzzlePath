@@ -2,7 +2,7 @@ class Platformer extends Phaser.Scene {
     constructor() {
         super("platformerScene");
         this.my = {sprite: {}};
-
+        this.onLadder = false;
     }
 
     init() {
@@ -14,7 +14,12 @@ class Platformer extends Phaser.Scene {
         this.PARTICLE_VELOCITY = 50;
         this.SCALE = 2.0;
         this.PLAYER_VELOCITY = 0;
-        this.HEALTH = 3;    
+        this.HEALTH = 3;
+        this.COOLDOWN = 0;
+        this.playerX;
+        this.playerY;
+        this.KEY = false;
+        this.COINS = 0;    
     }
 
     create() {
@@ -70,29 +75,21 @@ class Platformer extends Phaser.Scene {
         this.physics.world.enable(this.ropes1, Phaser.Physics.Arcade.STATIC_BODY);
         this.ropes1Group = this.add.group(this.ropes1);
 
-        this.ropes2 = this.map.createFromObjects("Ropes 2", {
-            name: "Ropes", 
-            key: "tilemap_sheet", 
-            frame: 89
-        });
-        this.physics.world.enable(this.ropes2, Phaser.Physics.Arcade.STATIC_BODY);
-        this.ropes2Group = this.add.group(this.ropes2);
+        // this.ropes2 = this.map.createFromObjects("Ropes 2", {
+        //     name: "Ropes", 
+        //     key: "tilemap_sheet", 
+        //     frame: 89
+        // });
+        // this.physics.world.enable(this.ropes2, Phaser.Physics.Arcade.STATIC_BODY);
+        // this.ropes2Group = this.add.group(this.ropes2);
 
-        this.ropes3 = this.map.createFromObjects("Ropes 3", {
-            name: "Ropes", 
-            key: "tilemap_sheet", 
-            frame: 89
-        });
-        this.physics.world.enable(this.ropes3, Phaser.Physics.Arcade.STATIC_BODY);
-        this.ropes3Group = this.add.group(this.ropes3);
-
-        this.ropes4 = this.map.createFromObjects("Ropes 4", {
-            name: "Ropes", 
-            key: "tilemap_sheet", 
-            frame: 89
-        });
-        this.physics.world.enable(this.ropes4, Phaser.Physics.Arcade.STATIC_BODY);
-        this.ropes4Group = this.add.group(this.ropes4);
+        // this.ropes3 = this.map.createFromObjects("Ropes 3", {
+        //     name: "Ropes", 
+        //     key: "tilemap_sheet", 
+        //     frame: 89
+        // });
+        // this.physics.world.enable(this.ropes3, Phaser.Physics.Arcade.STATIC_BODY);
+        // this.ropes3Group = this.add.group(this.ropes3);
 
         this.ladders = this.map.createFromObjects("Ladders", {
             name: "Ladders", 
@@ -162,10 +159,10 @@ class Platformer extends Phaser.Scene {
         let scaleFactor = this.SCALE;  // Scaling factor
         let tilesUp = 3;  // Number of tiles up from the bottom
 
-        let playerX = tileSize * scaleFactor;  // Position the player 1 tile (scaled) from the left edge
-        let playerY = this.map.heightInPixels - (tileSize * scaleFactor * tilesUp);  // Position the player a few tiles up from the bottom
+        this.playerX = tileSize * scaleFactor;  // Position the player 1 tile (scaled) from the left edge
+        this.playerY = this.map.heightInPixels - (tileSize * scaleFactor * tilesUp);  // Position the player a few tiles up from the bottom
 
-        my.sprite.player = this.physics.add.sprite(playerX, playerY, "platformer_characters", "tile_0000.png").setScale(scaleFactor);
+        my.sprite.player = this.physics.add.sprite(this.playerX, this.playerY, "platformer_characters", "tile_0000.png").setScale(scaleFactor);
         my.sprite.player.setCollideWorldBounds(true);
         my.sprite.player.setScale(1);
         my.sprite.player.body.checkCollision.up = false;
@@ -189,79 +186,133 @@ class Platformer extends Phaser.Scene {
         this.cameras.main.setZoom(this.SCALE);
 
         // ladder collision 
-        this.physics.add.collider(my.sprite.player, this.laddersGroup, this.climbLadders, null, this);
+        this.physics.add.overlap(my.sprite.player, this.laddersGroup, this.onLadderEnter, null, this);
 
         this.physics.world.TILE_BIAS = 24;
 
+        // Collect coins
+        this.physics.add.overlap(my.sprite.player, this.coinGroup, (obj1, obj2) => {
+            obj2.destroy(); // remove coin on overlap
+            this.COINS ++;
+            if(this.COINS == 5){
+                //unlocks rope
+                this.ropes2 = this.map.createFromObjects("Ropes 2", {
+                    name: "Ropes", 
+                    key: "tilemap_sheet", 
+                    frame: 89
+                });
+                this.physics.world.enable(this.ropes2, Phaser.Physics.Arcade.STATIC_BODY);
+                this.ropes2Group = this.add.group(this.ropes2);
+            }
+        });
+        
+        // Collect key
+        this.physics.add.overlap(my.sprite.player, this.keyGroup, (obj1, obj2) => {
+            obj2.destroy(); // remove key on overlap
+            this.KEY = true;
+        });
+
+        this.physics.add.overlap(my.sprite.player, this.lockGroup, (obj1, obj2) => {
+            if(this.KEY == true){
+                //unlocks rope
+                this.ropes3 = this.map.createFromObjects("Ropes 3", {
+                    name: "Ropes", 
+                    key: "tilemap_sheet", 
+                    frame: 89
+                });
+                this.physics.world.enable(this.ropes3, Phaser.Physics.Arcade.STATIC_BODY);
+                this.ropes3Group = this.add.group(this.ropes3);
+            }            
+        });
+    }
+
+    onLadderEnter(player, ladder) {
+        this.onLadder = true;
+        player.body.setGravityY(0); // Disable gravity for the player
+        player.body.setVelocityY(0); // Stop any vertical movement when initially touching the ladder
     }
 
     update() {
-        if(cursors.left.isDown) {
-            // have the player accelerate to the left
-            my.sprite.player.body.setAccelerationX(-this.ACCELERATION);
-            my.sprite.player.resetFlip();
-            my.sprite.player.anims.play('walk', true);
-
-        } else if(cursors.right.isDown) {
-            // have the player accelerate to the right
-            my.sprite.player.body.setAccelerationX(this.ACCELERATION);
-            my.sprite.player.setFlip(true, false);
-            my.sprite.player.anims.play('walk', true);
-
-        } else {
-            // set acceleration to 0 and have DRAG take over
-            my.sprite.player.body.setAccelerationX(0);
-            my.sprite.player.body.setDragX(this.DRAG);
-            my.sprite.player.anims.play('idle');
-        }
-
-        // player jump
-        // note that we need body.blocked rather than body.touching b/c the former applies to tilemap tiles and the latter to the "ground"
-        if(!my.sprite.player.body.blocked.down) {
-            my.sprite.player.anims.play('jump');
-        }
-        if(my.sprite.player.body.blocked.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
-            // set a Y velocity to have the player "jump" upwards (negative Y direction)
-            my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
-        }
-
-        // Fall Damage
-        if(!my.sprite.player.body.blocked.down){
-            this.PLAYER_VELOCITY = my.sprite.player.body.velocity.y;
-        }
-        if(my.sprite.player.y >= 885){// If player falls to bottom of map
-            this.HEALTH -=1;
-            this.events.emit('healthTracker');
-            my.sprite.player;
-        }else if(my.sprite.player.body.blocked.down && this.PLAYER_VELOCITY > 800 && my.sprite.player.y < 888){ // If player falls from tall height
-            this.PLAYER_VELOCITY = 0;
-            this.HEALTH -=1;
-            this.events.emit('healthTracker');
-        }
-        // If player health reaches 0, restart game
-        if(this.HEALTH <= 0){
-            this.events.emit('restart');
-            this.scene.restart();
-        }
-
-        // ladder movement logic
-        if (cursors.up.isDown && this.playerOnLadders) {
-            my.sprite.player.setVelocityY(-200);
-        } else if (cursors.down.isDown && this.playerOnLadders) {
-            my.sprite.player.setVelocityY(200);
-        }
-
-        // if 5 coins are collected, the rope disappears
-
-    }
-
-    climbLadders(player, ladders) {
-        if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), ladders.getBounds())) {
-            this.playerOnLadders = true;
-            player.body.setVelocityX(0);
-        } else {
-            this.playerOnLadders = false;
-        }
-    }
+        if (this.onLadder) {
+            if (cursors.up.isDown) {
+                my.sprite.player.body.setVelocityY(-this.ACCELERATION / 2); // Move up
+            } else if (cursors.down.isDown) {
+                my.sprite.player.body.setVelocityY(this.ACCELERATION / 2); // Move down
+            } else {
+                my.sprite.player.body.setVelocityY(0); // Stop moving if no key is pressed
+            }
     
+            // Allow horizontal movement while on ladder if needed
+            if (cursors.left.isDown) {
+                my.sprite.player.body.setVelocityX(-this.ACCELERATION / 2);
+                my.sprite.player.resetFlip();
+            } else if (cursors.right.isDown) {
+                my.sprite.player.body.setVelocityX(this.ACCELERATION / 2);
+                my.sprite.player.setFlip(true, false);
+            } else {
+                my.sprite.player.body.setVelocityX(0); // Stop horizontal movement if no key is pressed
+            }
+        } else {    
+            if (cursors.left.isDown) {
+                my.sprite.player.body.setAccelerationX(-this.ACCELERATION);
+                my.sprite.player.resetFlip();
+                my.sprite.player.anims.play('walk', true);
+    
+            } else if (cursors.right.isDown) {
+                my.sprite.player.body.setAccelerationX(this.ACCELERATION);
+                my.sprite.player.setFlip(true, false);
+                my.sprite.player.anims.play('walk', true);
+    
+            } else {
+                my.sprite.player.body.setAccelerationX(0);
+                my.sprite.player.body.setDragX(this.DRAG);
+                my.sprite.player.anims.play('idle');
+            }
+    
+            if (!my.sprite.player.body.blocked.down) {
+                my.sprite.player.anims.play('jump');
+            }
+
+            if (my.sprite.player.body.blocked.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
+                my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
+            }
+    
+            // Fall Damage
+            if(!my.sprite.player.body.blocked.down){
+                this.PLAYER_VELOCITY = my.sprite.player.body.velocity.y;
+            }
+            if(this.COOLDOWN !=0){
+                this.COOLDOWN ++;
+            }else if(this.COOLDOWN == 10){
+                this.COOLDOWN = 0;
+            }
+
+            if(my.sprite.player.y >= 885){// If player falls to bottom of map
+                this.HEALTH -=1;
+                this.events.emit('healthTracker');
+                my.sprite.player.y = this.playerY;
+                my.sprite.player.x = this.playerX;
+                this.COOLDOWN = 1;
+            }else if(my.sprite.player.body.blocked.down && this.PLAYER_VELOCITY > 800 && this.COOLDOWN == 0){ // If player falls from tall height
+                this.PLAYER_VELOCITY = 0;
+                this.HEALTH -=1;
+                this.events.emit('healthTracker');
+                this.COOLDOWN = 1;
+            }
+
+            // If player health reaches 0, restart game
+            if(this.HEALTH <= 0){
+                this.events.emit('restart');
+                this.scene.restart();
+            }
+        }
+    
+        // Reset ladder state when leaving the ladder
+        if (!this.physics.overlap(my.sprite.player, this.laddersGroup)) {
+            if (this.onLadder) {
+                this.onLadder = false;
+                my.sprite.player.body.setGravityY(this.physics.world.gravity.y); // Re-enable gravity
+            }
+        }
+    }
 }
