@@ -1389,7 +1389,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -1998,6 +1998,11 @@
                  "id":69,
                  "properties":[
                         {
+                         "name":"collides",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
                          "name":"type",
                          "type":"string",
                          "value":"rope"
@@ -2060,6 +2065,11 @@
                 {
                  "id":89,
                  "properties":[
+                        {
+                         "name":"collides",
+                         "type":"bool",
+                         "value":true
+                        }, 
                         {
                          "name":"type",
                          "type":"string",
@@ -2159,6 +2169,11 @@
                 {
                  "id":109,
                  "properties":[
+                        {
+                         "name":"collides",
+                         "type":"bool",
+                         "value":true
+                        }, 
                         {
                          "name":"type",
                          "type":"string",
