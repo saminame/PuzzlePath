@@ -217,14 +217,23 @@ class Platformer extends Phaser.Scene {
                 }, this);
             }            
         });
+        this.events.emit('load');
+
 
         // Make ropes collidable
-        this.ropes2Group.setCollisionByProperty({
-            collides: true
+        //this.ropes2Group.setCollisionByProperty({
+        //    collides: true
+        //});
+        //this.ropes3Group.setCollisionByProperty({
+        //    collides: true
+        //});
+
+        // Win objective
+        this.physics.add.overlap(my.sprite.player, this.winGroup, (obj1, obj2) => {
+            this.events.emit('restart');
+            this.scene.start("EndScene");
         });
-        this.ropes3Group.setCollisionByProperty({
-            collides: true
-        });
+
     }
 
     onLadderEnter(player, ladder) {
@@ -310,7 +319,7 @@ class Platformer extends Phaser.Scene {
             // If player health reaches 0, restart game
             if(this.HEALTH <= 0){
                 this.events.emit('restart');
-                this.scene.restart();
+                this.scene.start("RestartScene");
             }
         }
     

@@ -9,7 +9,7 @@ class Health extends Phaser.Scene{
     }
 
     create(){
-        const healthText = this.add.text(10, 10, 'Health: 3', { font: '48px Arial', fill: '#ffffff' });
+        const healthText = this.add.text(10, 10, '', { font: '48px Arial', fill: '#ffffff' });
         const ourGame = this.scene.get('platformerScene');
 
         ourGame.events.on('healthTracker', function ()
@@ -20,8 +20,13 @@ class Health extends Phaser.Scene{
         }, this);
         ourGame.events.on('restart', function ()
         {
+            healthText.setText("");
+
+        }, this);
+        ourGame.events.on('load', function ()
+        {
             this.HEALTH = 3;
-            healthText.setText(`Health: ${this.HEALTH}`);
+            healthText.setText("Health: 3");
 
         }, this);
     }
