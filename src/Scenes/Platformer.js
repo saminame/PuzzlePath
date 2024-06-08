@@ -228,6 +228,18 @@ class Platformer extends Phaser.Scene {
         //    collides: true
         //});
 
+        //Jump Boost
+        this.physics.add.overlap(my.sprite.player, this.jumpBoostGroup, (obj1, obj2) => {
+            this.JUMP_VELOCITY = -1100;
+            obj2.destroy();
+        });
+
+        //Anti Fall
+        this.physics.add.overlap(my.sprite.player, this.antiFallGroup, (obj1, obj2) => {
+            this.physics.world.gravity.y = 1000;
+            obj2.destroy();
+        });
+
         // Win objective
         this.physics.add.overlap(my.sprite.player, this.winGroup, (obj1, obj2) => {
             this.events.emit('restart');
@@ -268,6 +280,9 @@ class Platformer extends Phaser.Scene {
                 this.CHECK = false;
                 my.sprite.player.body.setVelocityY(0);
                 my.sprite.player.body.setVelocityX(0);
+                if(this.JUMP_VELOCITY > -1000){
+                    this.JUMP_VELOCITY = -900;
+                }
             }   
             if (cursors.left.isDown) {
                 my.sprite.player.body.setAccelerationX(-this.ACCELERATION);
