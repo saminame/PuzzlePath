@@ -19,7 +19,8 @@ class Platformer extends Phaser.Scene {
         this.playerX;
         this.playerY;
         this.KEY = false;
-        this.COINS = 0;    
+        this.COINS = 0;
+        this.CHECK = false;    
     }
 
     create() {
@@ -75,21 +76,21 @@ class Platformer extends Phaser.Scene {
         this.physics.world.enable(this.ropes1, Phaser.Physics.Arcade.STATIC_BODY);
         this.ropes1Group = this.add.group(this.ropes1);
 
-        // this.ropes2 = this.map.createFromObjects("Ropes 2", {
-        //     name: "Ropes", 
-        //     key: "tilemap_sheet", 
-        //     frame: 89
-        // });
-        // this.physics.world.enable(this.ropes2, Phaser.Physics.Arcade.STATIC_BODY);
-        // this.ropes2Group = this.add.group(this.ropes2);
+         this.ropes2 = this.map.createFromObjects("Ropes 2", {
+             name: "Ropes", 
+             key: "tilemap_sheet", 
+             frame: 89
+         });
+         this.physics.world.enable(this.ropes2, Phaser.Physics.Arcade.STATIC_BODY);
+         this.ropes2Group = this.add.group(this.ropes2);
 
-        // this.ropes3 = this.map.createFromObjects("Ropes 3", {
-        //     name: "Ropes", 
-        //     key: "tilemap_sheet", 
-        //     frame: 89
-        // });
-        // this.physics.world.enable(this.ropes3, Phaser.Physics.Arcade.STATIC_BODY);
-        // this.ropes3Group = this.add.group(this.ropes3);
+         this.ropes3 = this.map.createFromObjects("Ropes 3", {
+             name: "Ropes", 
+             key: "tilemap_sheet", 
+             frame: 89
+         });
+         this.physics.world.enable(this.ropes3, Phaser.Physics.Arcade.STATIC_BODY);
+         this.ropes3Group = this.add.group(this.ropes3);
 
         this.ladders = this.map.createFromObjects("Ladders", {
             name: "Ladders", 
@@ -194,15 +195,11 @@ class Platformer extends Phaser.Scene {
         this.physics.add.overlap(my.sprite.player, this.coinGroup, (obj1, obj2) => {
             obj2.destroy(); // remove coin on overlap
             this.COINS ++;
-            if(this.COINS == 5){
-                //unlocks rope
-                this.ropes2 = this.map.createFromObjects("Ropes 2", {
-                    name: "Ropes", 
-                    key: "tilemap_sheet", 
-                    frame: 89
-                });
-                this.physics.world.enable(this.ropes2, Phaser.Physics.Arcade.STATIC_BODY);
-                this.ropes2Group = this.add.group(this.ropes2);
+            if(this.COINS == 7){
+                // remove rope
+                this.ropes2Group.children.each(function(obj) {
+                    obj.destroy();
+                }, this);
             }
         });
         
@@ -214,15 +211,19 @@ class Platformer extends Phaser.Scene {
 
         this.physics.add.overlap(my.sprite.player, this.lockGroup, (obj1, obj2) => {
             if(this.KEY == true){
-                //unlocks rope
-                this.ropes3 = this.map.createFromObjects("Ropes 3", {
-                    name: "Ropes", 
-                    key: "tilemap_sheet", 
-                    frame: 89
-                });
-                this.physics.world.enable(this.ropes3, Phaser.Physics.Arcade.STATIC_BODY);
-                this.ropes3Group = this.add.group(this.ropes3);
+                // remove rope
+                this.ropes3Group.children.each(function(obj) {
+                    obj.destroy();
+                }, this);
             }            
+        });
+
+        // Make ropes collidable
+        this.ropes2Group.setCollisionByProperty({
+            collides: true
+        });
+        this.ropes3Group.setCollisionByProperty({
+            collides: true
         });
     }
 
@@ -234,6 +235,7 @@ class Platformer extends Phaser.Scene {
 
     update() {
         if (this.onLadder) {
+            this.CHECK = true;
             if (cursors.up.isDown) {
                 my.sprite.player.body.setVelocityY(-this.ACCELERATION / 2); // Move up
             } else if (cursors.down.isDown) {
@@ -252,7 +254,12 @@ class Platformer extends Phaser.Scene {
             } else {
                 my.sprite.player.body.setVelocityX(0); // Stop horizontal movement if no key is pressed
             }
-        } else {    
+        } else { 
+            if(this.CHECK == true){ // reset velocity after getting off ladder
+                this.CHECK = false;
+                my.sprite.player.body.setVelocityY(0);
+                my.sprite.player.body.setVelocityX(0);
+            }   
             if (cursors.left.isDown) {
                 my.sprite.player.body.setAccelerationX(-this.ACCELERATION);
                 my.sprite.player.resetFlip();
@@ -283,8 +290,7 @@ class Platformer extends Phaser.Scene {
             }
             if(this.COOLDOWN !=0){
                 this.COOLDOWN ++;
-            }
-            if(this.COOLDOWN == 10){
+            }else if(this.COOLDOWN == 10){
                 this.COOLDOWN = 0;
             }
 
