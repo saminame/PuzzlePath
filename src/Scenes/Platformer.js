@@ -221,12 +221,17 @@ class Platformer extends Phaser.Scene {
 
 
         // Make ropes collidable
-        //this.ropes2Group.setCollisionByProperty({
-        //    collides: true
-        //});
-        //this.ropes3Group.setCollisionByProperty({
-        //    collides: true
-        //});
+        this.ropes1Group.children.each(function(obj) {
+            this.physics.add.collider(my.sprite.player, obj);
+        }, this);
+        this.ropes2Group.children.each(function(obj) {
+            this.physics.add.collider(my.sprite.player, obj);
+        }, this);
+        this.ropes3Group.children.each(function(obj) {
+            this.physics.add.collider(my.sprite.player, obj);
+        }, this);
+
+
 
         //Jump Boost
         this.physics.add.overlap(my.sprite.player, this.jumpBoostGroup, (obj1, obj2) => {
