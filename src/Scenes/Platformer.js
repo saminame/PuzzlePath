@@ -20,7 +20,9 @@ class Platformer extends Phaser.Scene {
         this.playerY;
         this.KEY = false;
         this.COINS = 0;
-        this.CHECK = false;    
+        this.CHECK = false;
+        this.PIPE2 = false;
+        this.PIPE1 = false;    
     }
 
     create() {
@@ -166,7 +168,7 @@ class Platformer extends Phaser.Scene {
         my.sprite.player = this.physics.add.sprite(this.playerX, this.playerY, "platformer_characters", "tile_0000.png").setScale(scaleFactor);
         my.sprite.player.setCollideWorldBounds(true);
         my.sprite.player.setScale(1);
-        my.sprite.player.body.checkCollision.up = false;
+        //my.sprite.player.body.checkCollision.up = false;
 
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
@@ -195,18 +197,26 @@ class Platformer extends Phaser.Scene {
         this.physics.add.overlap(my.sprite.player, this.coinGroup, (obj1, obj2) => {
             obj2.destroy(); // remove coin on overlap
             this.COINS ++;
+            this.events.emit('ScoreTracker');
             if(this.COINS == 7){
                 // remove rope
                 this.ropes2Group.children.each(function(obj) {
                     obj.destroy();
                 }, this);
             }
+            //check if coin collected after pipe
+            if(this.PIPE2 == true){
+                this.PIPE1 = true;
+            }
+
         });
         
         // Collect key
         this.physics.add.overlap(my.sprite.player, this.keyGroup, (obj1, obj2) => {
             obj2.destroy(); // remove key on overlap
             this.KEY = true;
+            this.events.emit('KeyTracker');
+
         });
 
         this.physics.add.overlap(my.sprite.player, this.lockGroup, (obj1, obj2) => {
@@ -215,9 +225,57 @@ class Platformer extends Phaser.Scene {
                 this.ropes3Group.children.each(function(obj) {
                     obj.destroy();
                 }, this);
+                my.sprite.player.body.checkCollision.up = false;
+
             }            
         });
-        this.events.emit('load');
+
+        // collision with pipes
+
+        // second puzzle pipes
+        this.physics.add.overlap(my.sprite.player, this.pipe2Group, (obj1, obj2) => {
+            this.pipe1Group.children.each(function(obj) {
+                my.sprite.player.x = obj.x + 30;
+                my.sprite.player.y = obj.y;
+            }, this);
+            my.sprite.player.body.setVelocityY(0);
+            my.sprite.player.body.setVelocityX(0);
+            my.sprite.player.body.setAccelerationX(0);
+            this.PIPE2 = true;              
+        });
+
+        this.physics.add.overlap(my.sprite.player, this.pipe1Group, (obj1, obj2) => {
+            if(this.PIPE1 == true){ //after coin is collected
+                this.pipe2Group.children.each(function(obj) {
+                    my.sprite.player.x = obj.x + 30;
+                    my.sprite.player.y = obj.y;
+                }, this);
+                my.sprite.player.body.setVelocityY(0);
+                my.sprite.player.body.setVelocityX(0);
+                my.sprite.player.body.setAccelerationX(0);
+            }              
+        });
+
+        //other pipes
+        this.physics.add.overlap(my.sprite.player, this.pipe3Group, (obj1, obj2) => {
+            this.pipe4Group.children.each(function(obj) {
+                my.sprite.player.x = obj.x + 30;
+                my.sprite.player.y = obj.y;
+            }, this);
+            my.sprite.player.body.setVelocityY(0);
+            my.sprite.player.body.setVelocityX(0);
+            my.sprite.player.body.setAccelerationX(0);
+        });
+
+        this.physics.add.overlap(my.sprite.player, this.pipe4Group, (obj1, obj2) => {
+            this.pipe3Group.children.each(function(obj) {
+                my.sprite.player.x = obj.x - 30;
+                my.sprite.player.y = obj.y;
+            }, this);  
+            my.sprite.player.body.setVelocityY(0);
+            my.sprite.player.body.setVelocityX(0);
+            my.sprite.player.body.setAccelerationX(0);          
+        });
 
 
         // Make ropes collidable
@@ -230,7 +288,7 @@ class Platformer extends Phaser.Scene {
         this.ropes3Group.children.each(function(obj) {
             this.physics.add.collider(my.sprite.player, obj);
         }, this);
-
+            
 
 
         //Jump Boost
@@ -248,8 +306,13 @@ class Platformer extends Phaser.Scene {
         // Win objective
         this.physics.add.overlap(my.sprite.player, this.winGroup, (obj1, obj2) => {
             this.events.emit('restart');
+            this.events.emit('restartScore');
             this.scene.start("EndScene");
         });
+
+        // Health and Score  
+        this.events.emit('load');
+        this.events.emit('loadScore');
 
     }
 
@@ -339,6 +402,7 @@ class Platformer extends Phaser.Scene {
             // If player health reaches 0, restart game
             if(this.HEALTH <= 0){
                 this.events.emit('restart');
+                this.events.emit('restartScore');
                 this.scene.start("RestartScene");
             }
         }
