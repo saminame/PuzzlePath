@@ -26,6 +26,11 @@ class Platformer extends Phaser.Scene {
     }
 
     create() {
+        this.doorOpenSound = this.sound.add('doorOpen', { volume: 0.5 }); // Sound instance for door opening
+        this.coinPickSound = this.sound.add('coinPick', { volume: 0.5 });
+        this.restartSound = this.sound.add('restartSound', { volume: 0.5 });
+        this.antiFallSound = this.sound.add('antiFall', { volume: 0.5 });
+        this.jumpBoostSound = this.sound.add('jumpBoost', { volume: 0.5 });
         // Create a new tilemap game object which uses 18x18 pixel tiles, and is
         // 80 tiles wide and 50 tiles tall.
         this.map = this.add.tilemap("final", 18, 18, 80, 50);
@@ -170,6 +175,7 @@ class Platformer extends Phaser.Scene {
         my.sprite.player.setScale(1);
         //my.sprite.player.body.checkCollision.up = false;
 
+        
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
 
@@ -196,18 +202,21 @@ class Platformer extends Phaser.Scene {
         // Collect coins
         this.physics.add.overlap(my.sprite.player, this.coinGroup, (obj1, obj2) => {
             obj2.destroy(); // remove coin on overlap
+            this.coinPickSound.play(); // Play the sound when the coin is picked
             this.COINS ++;
             this.events.emit('ScoreTracker');
             if(this.COINS == 7){
                 // remove rope
                 this.ropes2Group.children.each(function(obj) {
                     obj.destroy();
+                    this.doorOpenSound.play(); // play the door sound
                 }, this);
             }
             //check if coin collected after pipe
             if(this.PIPE2 == true){
                 this.PIPE1 = true;
             }
+            
 
         });
         
@@ -224,6 +233,7 @@ class Platformer extends Phaser.Scene {
                 // remove rope
                 this.ropes3Group.children.each(function(obj) {
                     obj.destroy();
+                    this.doorOpenSound.play(); // Play the sound
                 }, this);
                 my.sprite.player.body.checkCollision.up = false;
 
@@ -295,16 +305,19 @@ class Platformer extends Phaser.Scene {
         this.physics.add.overlap(my.sprite.player, this.jumpBoostGroup, (obj1, obj2) => {
             this.JUMP_VELOCITY = -1100;
             obj2.destroy();
+            this.jumpBoostSound.play(); // Correct 'this' usage
         });
 
         //Anti Fall
         this.physics.add.overlap(my.sprite.player, this.antiFallGroup, (obj1, obj2) => {
             this.physics.world.gravity.y = 1000;
             obj2.destroy();
+            this.antiFallSound.play(); // Correct 'this' usage
         });
 
         // Win objective
         this.physics.add.overlap(my.sprite.player, this.winGroup, (obj1, obj2) => {
+            this.winSound.play(); // Play the win sound
             this.events.emit('restart');
             this.events.emit('restartScore');
             this.scene.start("EndScene");
@@ -321,6 +334,7 @@ class Platformer extends Phaser.Scene {
         player.body.setGravityY(0); // Disable gravity for the player
         player.body.setVelocityY(0); // Stop any vertical movement when initially touching the ladder
     }
+    
 
     update() {
         if (this.onLadder) {
@@ -401,6 +415,7 @@ class Platformer extends Phaser.Scene {
 
             // If player health reaches 0, restart game
             if(this.HEALTH <= 0){
+                this.restartSound.play(); // Play the restart sound
                 this.events.emit('restart');
                 this.events.emit('restartScore');
                 this.scene.start("RestartScene");
