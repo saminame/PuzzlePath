@@ -20,7 +20,9 @@ let config = {
     },
     width: 1440,
     height: 900,
-    scene: [TitleScene, Load, Platformer, Health, Score, RestartScene, EndScene]
+    backgroundColor: '#D8BFD8',
+
+    scene: [TitleScene, Controls, CreditScene, Load, Platformer, Health, Score, RestartScene, EndScene]
 }
 
 var cursors;
