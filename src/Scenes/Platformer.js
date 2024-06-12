@@ -18,11 +18,24 @@ class Platformer extends Phaser.Scene {
         this.COOLDOWN = 0;
         this.playerX;
         this.playerY;
+        this.npc1X = 290;
+        this.npc1Y = 835;
+        this.npc2X = 290;
+        this.npc2Y = 295;
+        this.npc3X = 910;
+        this.npc3Y = 385;
         this.KEY = false;
         this.COINS = 0;
+        this.DIAMONDS = 0;
         this.CHECK = false;
         this.PIPE2 = false;
         this.PIPE1 = false;    
+    }
+
+    preload() {
+        // Ensure the path is correct for the assets
+        this.load.setPath("./assets/");
+        this.load.audio('buttonClick', 'click4.ogg');
     }
 
     create() {
@@ -31,8 +44,10 @@ class Platformer extends Phaser.Scene {
         this.restartSound = this.sound.add('restartSound', { volume: 0.5 });
         this.antiFallSound = this.sound.add('antiFall', { volume: 0.5 });
         this.jumpBoostSound = this.sound.add('jumpBoost', { volume: 0.5 });
-        // Create a new tilemap game object which uses 18x18 pixel tiles, and is
-        // 80 tiles wide and 50 tiles tall.
+        this.winSound = this.sound.add('winSound', { volume: 0.5 });
+        this.hintToggle = this.sound.add('buttonClick', { volume: 0.5 });
+        
+        // Create a new tilemap game object which uses 18x18 pixel tiles, and is 80 tiles wide and 50 tiles tall.
         this.map = this.add.tilemap("final", 18, 18, 80, 50);
         this.physics.world.setBounds(0,0,80*18, 50*18);
 
@@ -58,6 +73,14 @@ class Platformer extends Phaser.Scene {
         });
         this.physics.world.enable(this.coins, Phaser.Physics.Arcade.STATIC_BODY);
         this.coinGroup = this.add.group(this.coins);
+
+        this.diamonds = this.map.createFromObjects("Diamonds", {
+            name: "Diamonds",
+            key: "tilemap_sheet",
+            frame: 67
+        });
+        this.physics.world.enable(this.diamonds, Phaser.Physics.Arcade.STATIC_BODY);
+        this.diamondGroup = this.add.group(this.diamonds);
 
         this.keys = this.map.createFromObjects("Key", {
             name: "Key", 
@@ -99,6 +122,22 @@ class Platformer extends Phaser.Scene {
          this.physics.world.enable(this.ropes3, Phaser.Physics.Arcade.STATIC_BODY);
          this.ropes3Group = this.add.group(this.ropes3);
 
+         this.ropes4 = this.map.createFromObjects("Ropes 4", {
+            name: "Ropes", 
+            key: "tilemap_sheet", 
+            frame: 89
+        });
+        this.physics.world.enable(this.ropes4, Phaser.Physics.Arcade.STATIC_BODY);
+        this.ropes4Group = this.add.group(this.ropes4);
+
+        this.ropes5 = this.map.createFromObjects("Ropes 5", {
+            name: "Ropes", 
+            key: "tilemap_sheet", 
+            frame: 89
+        });
+        this.physics.world.enable(this.ropes5, Phaser.Physics.Arcade.STATIC_BODY);
+        this.ropes5Group = this.add.group(this.ropes5);
+
         this.ladders = this.map.createFromObjects("Ladders", {
             name: "Ladders", 
             key: "tilemap_sheet", 
@@ -119,6 +158,14 @@ class Platformer extends Phaser.Scene {
             name: "Jump Boost",
             key: "tilemap_sheet2",
             frame: 89
+        });
+        this.physics.world.enable(this.jumpBoost, Phaser.Physics.Arcade.STATIC_BODY);
+        this.jumpBoostGroup = this.add.group(this.jumpBoost);
+
+        this.debuff = this.map.createFromObjects("Debuff", {
+            name: "Debuff",
+            key: "tilemap_sheet2",
+            frame: 83
         });
         this.physics.world.enable(this.jumpBoost, Phaser.Physics.Arcade.STATIC_BODY);
         this.jumpBoostGroup = this.add.group(this.jumpBoost);
@@ -163,9 +210,9 @@ class Platformer extends Phaser.Scene {
         this.physics.world.enable(this.win, Phaser.Physics.Arcade.STATIC_BODY);
         this.winGroup = this.add.group(this.win);
 
-        let tileSize = 18;  // Size of each tile
-        let scaleFactor = this.SCALE;  // Scaling factor
-        let tilesUp = 3;  // Number of tiles up from the bottom
+        let tileSize = 18;              // Size of each tile
+        let scaleFactor = this.SCALE;   // Scaling factor
+        let tilesUp = 3;                // Number of tiles up from the bottom
 
         this.playerX = tileSize * scaleFactor;  // Position the player 1 tile (scaled) from the left edge
         this.playerY = this.map.heightInPixels - (tileSize * scaleFactor * tilesUp);  // Position the player a few tiles up from the bottom
@@ -175,18 +222,55 @@ class Platformer extends Phaser.Scene {
         my.sprite.player.setScale(1);
         //my.sprite.player.body.checkCollision.up = false;
 
-        
+        my.sprite.npc1 = this.physics.add.sprite(this.npc1X, this.npc1Y, "platformer_characters", "tile_0004.png").setScale(scaleFactor);
+        my.sprite.npc1.setCollideWorldBounds(true);
+        my.sprite.npc1.setScale(1);
+        my.sprite.npc1.setInteractive();
+        let hintText1 = this.add.text(this.npc1X - 30, this.npc1Y - 30, "Click me for a hint hehe!", { fontSize: '10px', fill: '#fff' });
+        my.sprite.npc1.on('pointerdown', function (pointer) {
+            this.hintToggle.play();
+            hintText1.visible = false;
+            const hint1 = this.add.text(this.npc1X - 80, this.npc1Y - 250, "You need to use the key to unlock the rope!", { fontSize: '16px', fill: '#fff' });
+        }, this);
+
+        my.sprite.npc2 = this.physics.add.sprite(this.npc2X, this.npc2Y, "platformer_characters", "tile_0004.png").setScale(scaleFactor);
+        my.sprite.npc2.setCollideWorldBounds(true);
+        my.sprite.npc2.setScale(1);
+        my.sprite.npc2.setInteractive();
+        my.sprite.npc2.body.setVelocity(0); // Set velocity to zero
+        my.sprite.npc2.body.setAllowGravity(false); // Disable gravity initially
+        let hintText2 = this.add.text(this.npc2X - 100, this.npc2Y - 30, "Click me for a hint hehe!", { fontSize: '10px', fill: '#fff' });
+        my.sprite.npc2.on('pointerdown', function (pointer) {
+            this.hintToggle.play();
+            hintText2.visible = false;
+            const hint2 = this.add.text(this.npc2X - 250, this.npc2Y - 50, "You need to collect ALL the coins! I wonder where these pipes go...", { fontSize: '16px', fill: '#fff' });
+        }, this);
+
+        my.sprite.npc3 = this.physics.add.sprite(this.npc3X, this.npc3Y, "platformer_characters", "tile_0004.png").setScale(scaleFactor);
+        my.sprite.npc3.setCollideWorldBounds(true);
+        my.sprite.npc3.setScale(1);
+        my.sprite.npc3.setInteractive();
+        my.sprite.npc3.body.setVelocity(0); // Set velocity to zero
+        my.sprite.npc3.body.setAllowGravity(false); // Disable gravity initially
+        let hintText3 = this.add.text(this.npc3X - 100, this.npc3Y - 20, "Click me for a hint hehe!", { fontSize: '10px', fill: '#fff' });
+        my.sprite.npc3.on('pointerdown', function (pointer) {
+            this.hintToggle.play();
+            hintText3.visible = false;
+            const hint3 = this.add.text(this.npc3X + 50, this.npc3Y - 70, "You need to collect ALL\nthe coins and diamonds!", { fontSize: '16px', fill: '#fff' });
+        }, this);
+
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
+        this.physics.add.collider(my.sprite.npc1, this.groundLayer);
+        this.physics.add.collider(my.sprite.npc2, this.groundLayer);
+        this.physics.add.collider(my.sprite.npc3, this.groundLayer);
 
         // set up Phaser-provided cursor key input
         cursors = this.input.keyboard.createCursorKeys();
 
-        // debug key listener (assigned to D key)
-        this.input.keyboard.on('keydown-D', () => {
-            this.physics.world.drawDebug = this.physics.world.drawDebug ? false : true
-            this.physics.world.debugGraphic.clear()
-        }, this);
+        // debug
+        this.physics.world.drawDebug = this.physics.world.drawDebug ? false : true;
+        this.physics.world.debugGraphic.clear();
 
         // add camera code here
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
@@ -212,6 +296,13 @@ class Platformer extends Phaser.Scene {
                     this.doorOpenSound.play(); // play the door sound
                 }, this);
             }
+            if(this.COINS == 32){
+                // remove rope
+                this.ropes4Group.children.each(function(obj) {
+                    obj.destroy();
+                    this.doorOpenSound.play(); // play the door sound
+                }, this);
+            }
             //check if coin collected after pipe
             if(this.PIPE2 == true){
                 this.PIPE1 = true;
@@ -219,7 +310,23 @@ class Platformer extends Phaser.Scene {
             
 
         });
-        
+
+        // Add overlap check for diamonds
+        this.physics.add.overlap(my.sprite.player, this.diamondGroup, (obj1, obj2) => {
+            obj2.destroy(); // Remove diamond on overlap
+            this.coinPickSound.play(); // Play the same sound or a different one if you have a diamond sound
+            this.DIAMONDS ++;
+            this.events.emit('DiamondTracker'); // You can create a new event for diamond tracking if needed
+            
+            // Check if 4 diamonds are collected to remove rope4
+            if (this.DIAMONDS == 2) {
+                this.ropes5Group.children.each(function(obj) {
+                    obj.destroy();
+                    this.doorOpenSound.play(); // play the door sound
+                }, this);
+            }
+        });
+            
         // Collect key
         this.physics.add.overlap(my.sprite.player, this.keyGroup, (obj1, obj2) => {
             obj2.destroy(); // remove key on overlap
@@ -287,7 +394,6 @@ class Platformer extends Phaser.Scene {
             my.sprite.player.body.setAccelerationX(0);          
         });
 
-
         // Make ropes collidable
         this.ropes1Group.children.each(function(obj) {
             this.physics.add.collider(my.sprite.player, obj);
@@ -298,8 +404,12 @@ class Platformer extends Phaser.Scene {
         this.ropes3Group.children.each(function(obj) {
             this.physics.add.collider(my.sprite.player, obj);
         }, this);
-            
-
+        this.ropes4Group.children.each(function(obj) {
+            this.physics.add.collider(my.sprite.player, obj);
+        }, this);
+        this.ropes5Group.children.each(function(obj) {
+            this.physics.add.collider(my.sprite.player, obj);
+        }, this);
 
         //Jump Boost
         this.physics.add.overlap(my.sprite.player, this.jumpBoostGroup, (obj1, obj2) => {
@@ -315,6 +425,13 @@ class Platformer extends Phaser.Scene {
             this.antiFallSound.play(); // Correct 'this' usage
         });
 
+        //Debuff - resets the character's special abilities
+        this.physics.add.overlap(my.sprite.player, this.debuffGroup, (obj1, obj2) => {
+            this.JUMP_VELOCITY = -600;
+            obj2.destroy();
+            this.jumpBoostSound.play(); // Correct 'this' usage
+        });
+
         // Win objective
         this.physics.add.overlap(my.sprite.player, this.winGroup, (obj1, obj2) => {
             this.winSound.play(); // Play the win sound
@@ -326,7 +443,6 @@ class Platformer extends Phaser.Scene {
         // Health and Score  
         this.events.emit('load');
         this.events.emit('loadScore');
-
     }
 
     onLadderEnter(player, ladder) {
@@ -334,7 +450,6 @@ class Platformer extends Phaser.Scene {
         player.body.setGravityY(0); // Disable gravity for the player
         player.body.setVelocityY(0); // Stop any vertical movement when initially touching the ladder
     }
-    
 
     update() {
         if (this.onLadder) {
