@@ -30,7 +30,7 @@ class CreditScene extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5);
 
-        this.add.text(this.cameras.main.width / 2, 550, 'Final Game Project for CMPM 121\nSpring 2024\n', {
+        this.add.text(this.cameras.main.width / 2, 550, 'Final Game Project for CMPM 120\nSpring 2024\n', {
             font: '25px Arial',
             fill: '#AA336A',
             align: 'center'
