@@ -24,6 +24,15 @@ class Load extends Phaser.Scene {
             frameHeight: 19
         });
 
+        // Load sounds
+    this.load.audio('doorOpen', 'doorOpen_1.ogg');
+    this.load.audio('coinPick', 'jingles_NES09.ogg');
+    this.load.audio('restartSound', 'jingles_NES15.ogg');
+    this.load.audio('winSound', 'jingles_NES15.ogg');
+    this.load.audio('antiFall', 'jingles_NES06.ogg');
+    this.load.audio('jumpBoost', 'jingles_NES08.ogg');
+
+
     }
 
     create() {
