@@ -14,6 +14,12 @@ class TitleScene extends Phaser.Scene {
     }
 
     create() {
+        this.input.once('pointerdown', () => {
+            if (this.sound.context.state === 'suspended') {
+                this.sound.context.resume();
+            }
+        }, this);
+        
         // Add the title text to the scene
         this.add.image(this.cameras.main.width / 2, 450, 'border').setScale(17);
         this.add.text(this.cameras.main.width / 2, 330, 'Puzzle Path', {
