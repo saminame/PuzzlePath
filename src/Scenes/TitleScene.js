@@ -31,7 +31,7 @@ class TitleScene extends Phaser.Scene {
         this.buttonToggle = this.sound.add('buttonHover', { volume: 0.5 }); // Sound instance for button click
         // Display control instructions
         let controlsButton = this.add.image(this.cameras.main.width / 2, 420, 'button').setInteractive();
-        this.add.text(this.cameras.main.width / 2, 422, 'CONTROLS', {
+        let controlsText = this.add.text(this.cameras.main.width / 2, 422, 'CONTROLS', {
             font: '25px Arial',
             fill: '#AA336A',
             align: 'center'
@@ -50,10 +50,7 @@ class TitleScene extends Phaser.Scene {
             // Start the MainScene when the 'startButton' is clicked
             this.buttonSound.play();
             this.scene.start('loadScene');
-        });
-
-        // Center the button
-        startButton.setOrigin(0.5);
+        }).setOrigin(0.5);
 
         // Optional: Add some hover effects to indicate interactivity
         startButton.on('pointerover', () => {
@@ -71,10 +68,13 @@ class TitleScene extends Phaser.Scene {
             // Start the MainScene when the 'controlsButton' is clicked
             this.buttonSound.play();
             this.scene.start('controlsScene');
-        });
+        }).setOrigin(0.5);
 
-        // Center the button
-        controlsButton.setOrigin(0.5);
+        controlsText.on('pointerdown', () => {
+            // Start the MainScene when the 'controlsButton' is clicked
+            this.buttonSound.play();
+            this.scene.start('controlsScene');
+        }).setOrigin(0.5);
 
         // Optional: Add some hover effects to indicate interactivity
         controlsButton.on('pointerover', () => {
@@ -92,10 +92,13 @@ class TitleScene extends Phaser.Scene {
             // Start the MainScene when the 'creditsButton' is clicked
             this.buttonSound.play();
             this.scene.start('creditScene');
-        });
+        }).setOrigin(0.5);
 
-        // Center the button
-        creditsButton.setOrigin(0.5);
+        creditsText.on('pointerdown', () => {
+            // Start the MainScene when the 'creditsButton' is clicked
+            this.buttonSound.play();
+            this.scene.start('creditScene');
+        }).setOrigin(0.5);
 
         // Optional: Add some hover effects to indicate interactivity
         creditsButton.on('pointerover', () => {

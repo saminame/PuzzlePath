@@ -14,7 +14,7 @@ class Platformer extends Phaser.Scene {
         this.PARTICLE_VELOCITY = 50;
         this.SCALE = 2.0;
         this.PLAYER_VELOCITY = 0;
-        this.HEALTH = 3;
+        this.HEALTH = 5;
         this.COOLDOWN = 0;
         this.playerX;
         this.playerY;
@@ -167,8 +167,8 @@ class Platformer extends Phaser.Scene {
             key: "tilemap_sheet2",
             frame: 83
         });
-        this.physics.world.enable(this.jumpBoost, Phaser.Physics.Arcade.STATIC_BODY);
-        this.jumpBoostGroup = this.add.group(this.jumpBoost);
+        this.physics.world.enable(this.debuff, Phaser.Physics.Arcade.STATIC_BODY);
+        this.debuffGroup = this.add.group(this.debuff);
 
         this.pipe1 = this.map.createFromObjects("Pipes 1", {
             name: "Pipes",
@@ -220,12 +220,9 @@ class Platformer extends Phaser.Scene {
         my.sprite.player = this.physics.add.sprite(this.playerX, this.playerY, "platformer_characters", "tile_0000.png").setScale(scaleFactor);
         my.sprite.player.setCollideWorldBounds(true);
         my.sprite.player.setScale(1);
-        //my.sprite.player.body.checkCollision.up = false;
 
         my.sprite.npc1 = this.physics.add.sprite(this.npc1X, this.npc1Y, "platformer_characters", "tile_0004.png").setScale(scaleFactor);
-        my.sprite.npc1.setCollideWorldBounds(true);
-        my.sprite.npc1.setScale(1);
-        my.sprite.npc1.setInteractive();
+        this.setNPC(my.sprite.npc1);
         let hintText1 = this.add.text(this.npc1X - 30, this.npc1Y - 30, "Click me for a hint hehe!", { fontSize: '10px', fill: '#fff' });
         my.sprite.npc1.on('pointerdown', function (pointer) {
             this.hintToggle.play();
@@ -234,11 +231,7 @@ class Platformer extends Phaser.Scene {
         }, this);
 
         my.sprite.npc2 = this.physics.add.sprite(this.npc2X, this.npc2Y, "platformer_characters", "tile_0004.png").setScale(scaleFactor);
-        my.sprite.npc2.setCollideWorldBounds(true);
-        my.sprite.npc2.setScale(1);
-        my.sprite.npc2.setInteractive();
-        my.sprite.npc2.body.setVelocity(0); // Set velocity to zero
-        my.sprite.npc2.body.setAllowGravity(false); // Disable gravity initially
+        this.setNPC(my.sprite.npc2);
         let hintText2 = this.add.text(this.npc2X - 100, this.npc2Y - 30, "Click me for a hint hehe!", { fontSize: '10px', fill: '#fff' });
         my.sprite.npc2.on('pointerdown', function (pointer) {
             this.hintToggle.play();
@@ -247,11 +240,7 @@ class Platformer extends Phaser.Scene {
         }, this);
 
         my.sprite.npc3 = this.physics.add.sprite(this.npc3X, this.npc3Y, "platformer_characters", "tile_0004.png").setScale(scaleFactor);
-        my.sprite.npc3.setCollideWorldBounds(true);
-        my.sprite.npc3.setScale(1);
-        my.sprite.npc3.setInteractive();
-        my.sprite.npc3.body.setVelocity(0); // Set velocity to zero
-        my.sprite.npc3.body.setAllowGravity(false); // Disable gravity initially
+        this.setNPC(my.sprite.npc3);
         let hintText3 = this.add.text(this.npc3X - 100, this.npc3Y - 20, "Click me for a hint hehe!", { fontSize: '10px', fill: '#fff' });
         my.sprite.npc3.on('pointerdown', function (pointer) {
             this.hintToggle.play();
@@ -352,12 +341,10 @@ class Platformer extends Phaser.Scene {
         // second puzzle pipes
         this.physics.add.overlap(my.sprite.player, this.pipe2Group, (obj1, obj2) => {
             this.pipe1Group.children.each(function(obj) {
-                my.sprite.player.x = obj.x + 30;
+                my.sprite.player.x = obj.x + 20;
                 my.sprite.player.y = obj.y;
             }, this);
-            my.sprite.player.body.setVelocityY(0);
-            my.sprite.player.body.setVelocityX(0);
-            my.sprite.player.body.setAccelerationX(0);
+            this.playerStop(my.sprite.player);
             this.PIPE2 = true;              
         });
 
@@ -367,9 +354,7 @@ class Platformer extends Phaser.Scene {
                     my.sprite.player.x = obj.x + 30;
                     my.sprite.player.y = obj.y;
                 }, this);
-                my.sprite.player.body.setVelocityY(0);
-                my.sprite.player.body.setVelocityX(0);
-                my.sprite.player.body.setAccelerationX(0);
+                this.playerStop(my.sprite.player);
             }              
         });
 
@@ -379,9 +364,7 @@ class Platformer extends Phaser.Scene {
                 my.sprite.player.x = obj.x + 30;
                 my.sprite.player.y = obj.y;
             }, this);
-            my.sprite.player.body.setVelocityY(0);
-            my.sprite.player.body.setVelocityX(0);
-            my.sprite.player.body.setAccelerationX(0);
+            this.playerStop(my.sprite.player);
         });
 
         this.physics.add.overlap(my.sprite.player, this.pipe4Group, (obj1, obj2) => {
@@ -389,9 +372,7 @@ class Platformer extends Phaser.Scene {
                 my.sprite.player.x = obj.x - 30;
                 my.sprite.player.y = obj.y;
             }, this);  
-            my.sprite.player.body.setVelocityY(0);
-            my.sprite.player.body.setVelocityX(0);
-            my.sprite.player.body.setAccelerationX(0);          
+            this.playerStop(my.sprite.player);          
         });
 
         // Make ropes collidable
@@ -421,12 +402,15 @@ class Platformer extends Phaser.Scene {
         //Anti Fall
         this.physics.add.overlap(my.sprite.player, this.antiFallGroup, (obj1, obj2) => {
             this.physics.world.gravity.y = 1000;
+            my.sprite.player.body.setGravityY(1000); // Disable gravity for the player
             obj2.destroy();
             this.antiFallSound.play(); // Correct 'this' usage
         });
 
         //Debuff - resets the character's special abilities
         this.physics.add.overlap(my.sprite.player, this.debuffGroup, (obj1, obj2) => {
+            this.physics.world.gravity.y = 1500;
+            my.sprite.player.body.setGravityY(1500); // Disable gravity for the player
             this.JUMP_VELOCITY = -600;
             obj2.destroy();
             this.jumpBoostSound.play(); // Correct 'this' usage
@@ -443,6 +427,21 @@ class Platformer extends Phaser.Scene {
         // Health and Score  
         this.events.emit('load');
         this.events.emit('loadScore');
+    }
+
+    
+    setNPC(npc){
+        npc.setCollideWorldBounds(true);
+        npc.setScale(1);
+        npc.setInteractive();
+        npc.body.setVelocity(0);
+        npc.body.setAllowGravity(false); // Disable gravity initially
+    }
+
+    playerStop(player){
+        player.body.setVelocityY(0);
+        player.body.setVelocityX(0);
+        player.body.setAccelerationX(0);
     }
 
     onLadderEnter(player, ladder) {
@@ -479,6 +478,8 @@ class Platformer extends Phaser.Scene {
                 my.sprite.player.body.setVelocityX(0);
                 if(this.JUMP_VELOCITY > -1000){
                     this.JUMP_VELOCITY = -900;
+                }else if(this.JUMP_VELOCITY == -1100){
+                    this.JUMP_VELCITY = -600
                 }
             }   
             if (cursors.left.isDown) {

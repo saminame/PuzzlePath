@@ -5,7 +5,7 @@ class Health extends Phaser.Scene{
 
     }
     init(){
-        this.HEALTH = 3;
+        this.HEALTH = 5;
     }
 
     create(){
@@ -25,8 +25,8 @@ class Health extends Phaser.Scene{
         }, this);
         ourGame.events.on('load', function ()
         {
-            this.HEALTH = 3;
-            healthText.setText("Health: 3");
+            this.HEALTH = 5;
+            healthText.setText("Health: 5");
 
         }, this);
     }
