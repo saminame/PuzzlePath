@@ -319,7 +319,7 @@ class Platformer extends Phaser.Scene {
             this.events.emit('DiamondTracker'); // You can create a new event for diamond tracking if needed
             
             // Check if 4 diamonds are collected to remove rope4
-            if (this.DIAMONDS == 2) {
+            if (this.DIAMONDS == 4) {
                 this.ropes5Group.children.each(function(obj) {
                     obj.destroy();
                     this.doorOpenSound.play(); // play the door sound
